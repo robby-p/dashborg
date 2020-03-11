@@ -1,0 +1,15 @@
+{
+  "name": "dashborg",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Robby Polana <rpolana@squarespace.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@types/express": "^4.17.3",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "@types/errorhandler": "^1.5.0",
+    "errorhandler": "^1.5.1"
+  }
+}
