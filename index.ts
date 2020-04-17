@@ -1,46 +1,49 @@
 import express from "express";
 import errorhandler from "errorhandler";
-
-//helpers
-const hasFlag = (name: string) => process.argv.find(x => x === "--" + name);
-const flagValue = (name: string, defaultsTo?: any) => {
-  const index = process.argv.findIndex((x: string) => x === "--" + name);
-  if (index === -1) return defaultsTo;
-  const val = process.argv[index + 1];
-  try {
-    return JSON.parse(val);
-  } catch (e) {
-    return val;
-  }
-};
+import webpackDevMiddleware from "webpack-dev-middleware";
+import webpack from "webpack";
+import WebpackHotMiddlware from "webpack-hot-middleware";
+import webpackConfig from "./webpack.config";
+import { rootPath, flagValue } from "./utils";
 
 //constants
-const HOST = "127.0.0.1";
-const PORT = flagValue("port",3000);
-const ENV = process.env.NODE_ENV === "development" ? "dev" : "prod";
+const HOST = flagValue("host", "127.0.0.1"); // flag: --host
+const PORT = flagValue("port", 3000); // flag: --port
+const IS_DEV = process.env.NODE_ENV === "development";
+const MODE = IS_DEV ? "development" : "production";
+
+//webpack
+const webpackCompiler = webpack({ mode: MODE, ...webpackConfig });
 
 //instances
+const webpackInstance = webpackDevMiddleware(webpackCompiler);
 const app = express();
 
+app.use(webpackInstance);
+app.use(WebpackHotMiddlware(webpackCompiler));
+
 //config
-const ErrorHandler =
-  ENV === "dev"
-    ? errorhandler()
-    : <express.ErrorRequestHandler>function(err, req, res, next) {
-        console.error(err.stack);
-      };
+const ErrorHandler = IS_DEV
+  ? errorhandler()
+  : <express.ErrorRequestHandler>function (err, req, res, next) {
+      console.error(err.stack);
+    };
 
 //routes
-app.get("/", (req, res) => res.send("hello world"));
+app.get("/ping", (req, res) => res.json({ pong: true }));
 app.use(ErrorHandler);
 
-app.listen(PORT,function(err?: Error){
-  if (err){
+//index html catchall
+
+app.get("*", (req, res) => res.sendFile(rootPath("dist/index.html")));
+
+app.listen(PORT, function (err?: Error) {
+  if (err) {
     console.error(err);
     process.exit(1);
   } else {
-    console.log(`TS Express server listening on ${PORT}`)
-    console.log(`--------------------------------------`)
+    console.log(`TS Express server listening on ${PORT}`);
+    console.log(`--------------------------------------`);
     console.log(`go to: http://${HOST}:${PORT}`);
   }
 });
